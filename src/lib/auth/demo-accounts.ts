@@ -19,8 +19,6 @@ export const demoAccounts = [
   },
 ] as const;
 
-export type DemoAccountId = (typeof demoAccounts)[number]["id"];
-
 export function getDemoAccount(id: string | string[] | undefined) {
   const selectedId = Array.isArray(id) ? id[0] : id;
 
