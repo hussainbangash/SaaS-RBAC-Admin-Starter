@@ -5,7 +5,9 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { appRoles } from "@/lib/permissions/access";
+import { canAdminChangeRole, canAdminDeleteUser } from "@/lib/permissions/matrix";
 import { requireRole } from "@/lib/permissions/roles";
+import { passwordSchema } from "@/lib/security/password";
 import { BCRYPT_COST } from "@/auth";
 import type { ActionState } from "./action-state";
 
@@ -14,7 +16,7 @@ const roleSchema = z.enum(appRoles);
 const createUserSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(80),
   email: z.string().trim().toLowerCase().email("Enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: passwordSchema,
   role: roleSchema,
 });
 
@@ -88,7 +90,7 @@ export async function updateUserRole(
 
   const { userId, role } = parsed.data;
 
-  if (userId === admin.id && role !== "ADMIN") {
+  if (!canAdminChangeRole(admin.id, userId, role)) {
     return fail("Admins cannot remove their own admin role.");
   }
 
@@ -132,7 +134,7 @@ export async function deleteUser(
 
   const { userId } = parsed.data;
 
-  if (userId === admin.id) {
+  if (!canAdminDeleteUser(admin.id, userId)) {
     return fail("Admins cannot delete their own account.");
   }
 

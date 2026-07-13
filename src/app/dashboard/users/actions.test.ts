@@ -46,7 +46,7 @@ describe("user management server actions enforce the ADMIN role", () => {
   it("createUser calls requireRole(['ADMIN'])", async () => {
     await createUser(
       initialActionState,
-      formData({ name: "New", email: "new@demo.com", password: "password123", role: "USER" })
+      formData({ name: "New", email: "new@demo.com", password: "StrongPass123", role: "USER" })
     );
     expect(requireRoleMock).toHaveBeenCalledWith(["ADMIN"]);
   });
@@ -67,7 +67,7 @@ describe("user management server actions enforce the ADMIN role", () => {
     await expect(
       createUser(
         initialActionState,
-        formData({ name: "New", email: "new@demo.com", password: "password123", role: "USER" })
+        formData({ name: "New", email: "new@demo.com", password: "StrongPass123", role: "USER" })
       )
     ).rejects.toThrow();
     expect(prismaMock.user.create).not.toHaveBeenCalled();
@@ -78,7 +78,7 @@ describe("user management validation and self-protection", () => {
   it("creates a user and reports success on valid input", async () => {
     const result = await createUser(
       initialActionState,
-      formData({ name: "New", email: "new@demo.com", password: "password123", role: "USER" })
+      formData({ name: "New", email: "new@demo.com", password: "StrongPass123", role: "USER" })
     );
     expect(prismaMock.user.create).toHaveBeenCalledOnce();
     expect(result.status).toBe("success");
@@ -88,7 +88,7 @@ describe("user management validation and self-protection", () => {
     prismaMock.user.findUnique.mockResolvedValue({ id: "existing" });
     const result = await createUser(
       initialActionState,
-      formData({ name: "Dup", email: "dup@demo.com", password: "password123", role: "USER" })
+      formData({ name: "Dup", email: "dup@demo.com", password: "StrongPass123", role: "USER" })
     );
     expect(result.status).toBe("error");
     expect(prismaMock.user.create).not.toHaveBeenCalled();

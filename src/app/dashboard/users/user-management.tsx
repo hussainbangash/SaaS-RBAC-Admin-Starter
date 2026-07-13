@@ -78,10 +78,13 @@ function AddUserForm() {
           id="password"
           name="password"
           type="password"
-          minLength={8}
+          minLength={12}
           className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none focus:border-slate-900"
           required
         />
+        <p className="mt-1 text-xs text-slate-400">
+          Min 12 chars with uppercase, lowercase, and a number.
+        </p>
       </div>
 
       <div>

@@ -29,6 +29,16 @@ routing, seeded users, and protected admin actions are already wired.
 - Prisma schema, migration, and seed data.
 - RBAC documentation and template setup checklist.
 
+## Screenshots
+
+| Login | Dashboard | User management |
+| --- | --- | --- |
+| ![Login](public/screenshots/login.png) | ![Dashboard](public/screenshots/dashboard.png) | ![Admin user management](public/screenshots/admin-users.png) |
+
+| Manager reports | Profile | Access denied |
+| --- | --- | --- |
+| ![Reports](public/screenshots/manager-reports.png) | ![Profile](public/screenshots/profile.png) | ![Unauthorized](public/screenshots/unauthorized.png) |
+
 ## Quick Start
 
 ```bash
