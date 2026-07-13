@@ -4,6 +4,12 @@ This template uses server-side role checks as the source of truth. UI navigation
 is filtered by role, but restricted pages and mutations also call protected
 helpers before they read or write data.
 
+`requireUser()` re-reads the account from the database on every request rather
+than trusting the JWT alone. This means a changed role or a deleted account is
+enforced immediately, not only when the token expires. The `jwt` callback in
+`src/auth.ts` also refreshes the role so session-derived UI (like the sidebar)
+stays in sync.
+
 ## Roles
 
 The starter ships with three roles:

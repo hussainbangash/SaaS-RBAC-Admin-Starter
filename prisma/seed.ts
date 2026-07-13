@@ -10,7 +10,18 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  const passwordHash = await bcrypt.hash("password123", 10);
+  // Safety guard: this seed wipes every table and creates accounts with a known
+  // password. Refuse to run it against a production database unless explicitly
+  // overridden with ALLOW_PROD_SEED=1.
+  if (process.env.NODE_ENV === "production" && process.env.ALLOW_PROD_SEED !== "1") {
+    throw new Error(
+      "Refusing to seed in production (NODE_ENV=production). " +
+        "This deletes all data and creates demo accounts. " +
+        "Set ALLOW_PROD_SEED=1 to override intentionally."
+    );
+  }
+
+  const passwordHash = await bcrypt.hash("password123", 12);
 
   await prisma.activityLog.deleteMany();
   await prisma.report.deleteMany();
