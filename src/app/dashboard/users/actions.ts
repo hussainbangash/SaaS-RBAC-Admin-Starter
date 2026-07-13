@@ -5,14 +5,18 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { appRoles } from "@/lib/permissions/access";
+import { canAdminChangeRole, canAdminDeleteUser } from "@/lib/permissions/matrix";
 import { requireRole } from "@/lib/permissions/roles";
+import { passwordSchema } from "@/lib/security/password";
+import { BCRYPT_COST } from "@/auth";
+import type { ActionState } from "./action-state";
 
 const roleSchema = z.enum(appRoles);
 
 const createUserSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(80),
-  email: z.string().trim().toLowerCase().email(),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  email: z.string().trim().toLowerCase().email("Enter a valid email address"),
+  password: passwordSchema,
   role: roleSchema,
 });
 
@@ -25,39 +29,39 @@ const deleteUserSchema = z.object({
   userId: z.string().min(1),
 });
 
-export async function createUser(formData: FormData) {
+function ok(message: string): ActionState {
+  return { status: "success", message };
+}
+
+function fail(message: string): ActionState {
+  return { status: "error", message };
+}
+
+export async function createUser(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
   const admin = await requireRole(["ADMIN"]);
   const parsed = createUserSchema.safeParse(Object.fromEntries(formData));
 
   if (!parsed.success) {
-    throw new Error(
-      parsed.error.issues[0]?.message ?? "Invalid user form submission."
-    );
+    return fail(parsed.error.issues[0]?.message ?? "Invalid user form submission.");
   }
 
   const { name, email, password, role } = parsed.data;
   const existingUser = await prisma.user.findUnique({
-    where: {
-      email,
-    },
-    select: {
-      id: true,
-    },
+    where: { email },
+    select: { id: true },
   });
 
   if (existingUser) {
-    throw new Error("A user with that email already exists.");
+    return fail("A user with that email already exists.");
   }
 
-  const passwordHash = await bcrypt.hash(password, 10);
+  const passwordHash = await bcrypt.hash(password, BCRYPT_COST);
 
   await prisma.user.create({
-    data: {
-      name,
-      email,
-      passwordHash,
-      role,
-    },
+    data: { name, email, passwordHash, role },
   });
 
   await prisma.activityLog.create({
@@ -70,32 +74,38 @@ export async function createUser(formData: FormData) {
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/users");
+  return ok(`Created ${email}.`);
 }
 
-export async function updateUserRole(formData: FormData) {
+export async function updateUserRole(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
   const admin = await requireRole(["ADMIN"]);
   const parsed = updateRoleSchema.safeParse(Object.fromEntries(formData));
 
   if (!parsed.success) {
-    throw new Error("Invalid role update submission.");
+    return fail("Invalid role update submission.");
   }
 
   const { userId, role } = parsed.data;
 
-  if (userId === admin.id && role !== "ADMIN") {
-    throw new Error("Admins cannot remove their own admin role.");
+  if (!canAdminChangeRole(admin.id, userId, role)) {
+    return fail("Admins cannot remove their own admin role.");
   }
 
-  const targetUser = await prisma.user.update({
-    where: {
-      id: userId,
-    },
-    data: {
-      role,
-    },
-    select: {
-      email: true,
-    },
+  const targetUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { email: true },
+  });
+
+  if (!targetUser) {
+    return fail("That user no longer exists.");
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { role },
   });
 
   await prisma.activityLog.create({
@@ -108,39 +118,37 @@ export async function updateUserRole(formData: FormData) {
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/users");
+  return ok(`Updated ${targetUser.email} to ${role}.`);
 }
 
-export async function deleteUser(formData: FormData) {
+export async function deleteUser(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
   const admin = await requireRole(["ADMIN"]);
   const parsed = deleteUserSchema.safeParse(Object.fromEntries(formData));
 
   if (!parsed.success) {
-    throw new Error("Invalid delete user submission.");
+    return fail("Invalid delete user submission.");
   }
 
   const { userId } = parsed.data;
 
-  if (userId === admin.id) {
-    throw new Error("Admins cannot delete their own account.");
+  if (!canAdminDeleteUser(admin.id, userId)) {
+    return fail("Admins cannot delete their own account.");
   }
 
   const targetUser = await prisma.user.findUnique({
-    where: {
-      id: userId,
-    },
-    select: {
-      email: true,
-    },
+    where: { id: userId },
+    select: { email: true },
   });
 
   if (!targetUser) {
-    return;
+    return fail("That user no longer exists.");
   }
 
   await prisma.user.delete({
-    where: {
-      id: userId,
-    },
+    where: { id: userId },
   });
 
   await prisma.activityLog.create({
@@ -153,4 +161,5 @@ export async function deleteUser(formData: FormData) {
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/users");
+  return ok(`Deleted ${targetUser.email}.`);
 }
