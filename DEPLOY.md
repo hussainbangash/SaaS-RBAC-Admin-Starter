@@ -21,6 +21,7 @@ npm install
 # use the DIRECT Neon URL here
 $env:DATABASE_URL = "postgresql://USER:PASSWORD@ep-xxx.neon.tech/neondb?sslmode=require"
 
+npx prisma generate         # build the Prisma client (gitignored, so a fresh clone needs this)
 npx prisma migrate deploy   # creates the tables
 npm run seed                # creates admin/manager/user demo accounts
 ```
