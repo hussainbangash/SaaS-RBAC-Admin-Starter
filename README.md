@@ -1,9 +1,14 @@
 # SaaS RBAC Starter
 
+[![Live demo](https://img.shields.io/badge/Live_demo-open-16a34a?style=flat-square)](https://saa-s-rbac-admin-starter.vercel.app)
 [![CI](https://github.com/hussainbangash/SaaS-RBAC-Admin-Starter/actions/workflows/ci.yml/badge.svg)](https://github.com/hussainbangash/SaaS-RBAC-Admin-Starter/actions/workflows/ci.yml)
 
 A reusable Next.js SaaS template with credentials authentication, PostgreSQL,
 Prisma, and server-side role-based access control.
+
+> **🔗 Live demo:** https://saa-s-rbac-admin-starter.vercel.app — sign in with
+> `admin@demo.com` / `password123` (or the Manager / User demo buttons) to try the
+> role-based dashboard. Running on Vercel + Neon.
 
 Use it as a GitHub template when you want a project where auth, dashboard
 routing, seeded users, and protected admin actions are already wired.
