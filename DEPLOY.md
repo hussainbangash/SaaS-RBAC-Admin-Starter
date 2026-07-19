@@ -15,7 +15,7 @@ A step-by-step guide to put this template live on **Vercel** (Next.js host) with
 Run these locally with the **direct** URL so the migration's locks work correctly:
 
 ```powershell
-cd path\to\SaaS-RBAC-Admin-Starter
+cd path\to\RBAC-Starter
 npm install
 
 # use the DIRECT Neon URL here
