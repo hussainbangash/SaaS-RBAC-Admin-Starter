@@ -128,6 +128,31 @@ npm run db:deploy    # Apply migrations in deploy environments
 npm run seed         # Seed demo users and data
 ```
 
+## Architecture
+
+Every request flows through the same guard path — and every protected request re-reads the
+user from the database, so deletions and role changes take effect immediately:
+
+```mermaid
+flowchart TD
+    Req["Browser request"] --> MW["Edge middleware<br/>per-request nonce CSP"]
+    MW --> Route{"Route type"}
+    Route -->|"public: /login, /forgot-password"| Pub["Render public page"]
+    Route -->|"protected: /dashboard/**"| RU["requireUser()"]
+
+    RU --> Sess["Read JWT session"]
+    Sess --> DB[("PostgreSQL:<br/>re-read user by id")]
+    DB -->|"user deleted"| Lo["redirect → /login"]
+    DB -->|"password changed since login"| Lo
+    DB -->|"ok"| RR["requireRole([...])"]
+    RR -->|"role not allowed"| Un["redirect → /unauthorized"]
+    RR -->|"allowed"| Comp["Server component / action"]
+    Comp -->|"mutation"| Guard["requireRole() again<br/>+ Zod validation → Prisma"]
+```
+
+The reasoning behind the non-obvious choices (JWT + live DB re-check, session invalidation
+on reset, nonce CSP, automated migrations, …) is written up in **[docs/DESIGN.md](docs/DESIGN.md)**.
+
 ## RBAC Model
 
 The core access map lives in `src/lib/permissions/access.ts`.
