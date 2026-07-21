@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
@@ -12,6 +13,13 @@ export const BCRYPT_COST = 12;
 // A hash used to keep the timing of failed logins roughly constant whether or
 // not the email exists, which mitigates user enumeration.
 const DUMMY_HASH = bcrypt.hashSync("unused-dummy-password", BCRYPT_COST);
+
+// Google sign-in is enabled only when its credentials are configured, so the app
+// runs fine without them (the "Sign in with Google" button is hidden otherwise —
+// see the login page). Auth.js reads AUTH_GOOGLE_ID / AUTH_GOOGLE_SECRET.
+export const googleEnabled = Boolean(
+  process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET
+);
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: {
@@ -80,10 +88,33 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         };
       },
     }),
+    ...(googleEnabled ? [Google] : []),
   ],
 
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
+      // OAuth (e.g. Google) sign-in: upsert a matching app user. New users default
+      // to the USER role; an existing account is matched by its verified email.
+      if (account && account.provider !== "credentials" && user?.email) {
+        const dbUser = await prisma.user.upsert({
+          where: { email: user.email },
+          update: {},
+          create: {
+            email: user.email,
+            name: user.name ?? null,
+            image: user.image ?? null,
+            role: "USER",
+          },
+          select: { id: true, role: true, passwordChangedAt: true },
+        });
+        token.id = dbUser.id;
+        token.role = dbUser.role as AppRole;
+        token.pwdChangedAt = dbUser.passwordChangedAt
+          ? dbUser.passwordChangedAt.getTime()
+          : null;
+        return token;
+      }
+
       if (user) {
         token.id = user.id;
         token.role = user.role;

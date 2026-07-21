@@ -19,3 +19,8 @@ export async function signInWithCredentials(formData: FormData) {
     throw error;
   }
 }
+
+export async function signInWithGoogle() {
+  // Redirects to Google's consent screen, then back to /dashboard.
+  await signIn("google", { redirectTo: "/dashboard" });
+}

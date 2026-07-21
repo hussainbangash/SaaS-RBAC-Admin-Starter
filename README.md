@@ -30,7 +30,9 @@ routing, seeded users, and protected admin actions are already wired.
 - Server-side route guards for protected pages.
 - Admin-only user management.
 - Admin/Manager reports page.
+- Admin audit-log viewer with action filtering + pagination.
 - Profile page for authenticated users.
+- Password reset (with session invalidation) and optional "Sign in with Google".
 - Prisma schema, migration, and seed data.
 - RBAC documentation and template setup checklist.
 
