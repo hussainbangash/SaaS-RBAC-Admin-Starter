@@ -32,6 +32,15 @@ describe("RBAC access map", () => {
     expect(canAccess("USER", users!.allowedRoles)).toBe(false);
   });
 
+  it("restricts the audit log to admins", () => {
+    const audit = dashboardRoutes.find((route) => route.href === "/dashboard/audit");
+
+    expect(audit).toBeDefined();
+    expect(canAccess("ADMIN", audit!.allowedRoles)).toBe(true);
+    expect(canAccess("MANAGER", audit!.allowedRoles)).toBe(false);
+    expect(canAccess("USER", audit!.allowedRoles)).toBe(false);
+  });
+
   it("allows reports for admins and managers only", () => {
     const reports = dashboardRoutes.find(
       (route) => route.href === "/dashboard/reports"

@@ -42,6 +42,7 @@ Current routes:
 | `/dashboard` | Admin, Manager, User |
 | `/dashboard/users` | Admin |
 | `/dashboard/reports` | Admin, Manager |
+| `/dashboard/audit` | Admin |
 | `/dashboard/profile` | Admin, Manager, User |
 
 The dashboard layout filters sidebar links with `canAccess()`. Each restricted
