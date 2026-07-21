@@ -170,6 +170,7 @@ Route access:
 | `/dashboard` | Admin, Manager, User |
 | `/dashboard/users` | Admin |
 | `/dashboard/reports` | Admin, Manager |
+| `/dashboard/audit` | Admin |
 | `/dashboard/profile` | Admin, Manager, User |
 
 See `docs/RBAC.md` for customization steps.
